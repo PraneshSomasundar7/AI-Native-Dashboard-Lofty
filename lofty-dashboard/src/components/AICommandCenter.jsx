@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { MessageSquare, X, Send, Bot, Sparkles, ArrowRight, Navigation, Mic } from 'lucide-react'
+import { MessageSquare, X, Send, Bot, Sparkles, ArrowRight, Navigation, Mic, StopCircle } from 'lucide-react'
 
 const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY
 const GROQ_MODEL = 'llama-3.3-70b-versatile'
@@ -244,6 +244,7 @@ export default function AICommandCenter({ onNavigate, widgetData }) {
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isListening, setIsListening] = useState(false)
+  const [isSpeaking, setIsSpeaking] = useState(false)
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
   const textareaRef = useRef(null)
@@ -290,7 +291,7 @@ export default function AICommandCenter({ onNavigate, widgetData }) {
     recognition.onresult = e => {
       const transcript = e.results[0][0].transcript.trim()
       setIsListening(false)
-      if (transcript) sendMessage(transcript)
+      if (transcript) sendMessage(transcript, true)
     }
     recognition.onerror = () => setIsListening(false)
     recognition.onend = () => setIsListening(false)
@@ -298,7 +299,25 @@ export default function AICommandCenter({ onNavigate, widgetData }) {
     recognition.start()
   }
 
-  async function sendMessage(textOverride) {
+  function speak(text) {
+    if (!window.speechSynthesis) return
+    window.speechSynthesis.cancel()
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.lang = 'en-US'
+    utterance.rate = 1.0
+    utterance.pitch = 1.0
+    utterance.onstart = () => setIsSpeaking(true)
+    utterance.onend = () => setIsSpeaking(false)
+    utterance.onerror = () => setIsSpeaking(false)
+    window.speechSynthesis.speak(utterance)
+  }
+
+  function stopSpeaking() {
+    window.speechSynthesis?.cancel()
+    setIsSpeaking(false)
+  }
+
+  async function sendMessage(textOverride, fromVoice = false) {
     const text = (textOverride !== undefined ? textOverride : input).trim()
     if (!text || isLoading) return
 
@@ -335,6 +354,7 @@ export default function AICommandCenter({ onNavigate, widgetData }) {
         const target = navMatch[1].trim()
         const clean = raw.replace(/<<NAVIGATE:[^>]+>>/g, '').trim()
         setMessages(prev => [...prev, { role: 'assistant', content: clean, navigatedTo: target }])
+        if (fromVoice) speak(clean)
 
         // Try section scroll first, then nav page switch
         setTimeout(() => {
@@ -345,6 +365,7 @@ export default function AICommandCenter({ onNavigate, widgetData }) {
         }, 500)
       } else {
         setMessages(prev => [...prev, { role: 'assistant', content: raw }])
+        if (fromVoice) speak(raw)
       }
     } catch {
       setMessages(prev => [
@@ -491,6 +512,16 @@ export default function AICommandCenter({ onNavigate, widgetData }) {
               onFocus={e => (e.target.style.borderColor = '#93C5FD')}
               onBlur={e => (e.target.style.borderColor = '#E2E8F0')}
             />
+            {isSpeaking && (
+              <button
+                onClick={stopSpeaking}
+                title="Stop speaking"
+                className="w-10 h-10 rounded-xl flex items-center justify-center transition-all shrink-0"
+                style={{ background: '#FEF2F2', color: '#EF4444' }}
+              >
+                <StopCircle size={15} />
+              </button>
+            )}
             <button
               onClick={startVoice}
               disabled={isLoading}
