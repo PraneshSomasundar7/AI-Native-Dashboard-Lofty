@@ -69,14 +69,11 @@ export default function AOSActionZone({ onActionComplete, liveAlert, onAlertDism
 
   return (
     <div className="mt-6 mb-3">
-      <div className="rounded-2xl overflow-hidden"
-        style={{
-          background: isExpanded ? 'linear-gradient(135deg, #EFF6FF 0%, #F0FDFA 50%, #EFF6FF 100%)' : 'white',
-          border: isExpanded ? '1px solid #BAE6FD' : '1px solid #FCD34D',
-          boxShadow: isExpanded ? '0 4px 24px rgba(59,130,246,0.12)' : '0 1px 3px rgba(0,0,0,0.04)',
-          transition: 'all 0.4s cubic-bezier(0.22,1,0.36,1)',
-        }}
-      >
+      <div className={`rounded-2xl overflow-hidden transition-all duration-500 ${
+        isExpanded
+          ? 'bg-gradient-to-r from-indigo-50 to-blue-50 border border-blue-200/60 shadow-[0_4px_24px_rgba(59,130,246,0.12)]'
+          : 'bg-white border border-amber-300 shadow-sm hover:shadow-[0_4px_12px_rgba(251,191,36,0.15)]'
+      }`}>
         {/* Banner */}
         <div className="flex items-center justify-between px-5 py-4">
           <div className="flex items-center gap-3">
@@ -194,28 +191,24 @@ export default function AOSActionZone({ onActionComplete, liveAlert, onAlertDism
                     <button
                       onClick={phase === 'idle' ? handleSend : undefined}
                       disabled={phase === 'sending' || aiMessage === null}
-                      className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold border-none text-white transition-all ${
+                      className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.2)] ${
                         phase === 'sending' ? 'btn-sending cursor-not-allowed opacity-90'
-                        : aiMessage === null ? 'cursor-not-allowed opacity-50'
-                        : 'cursor-pointer hover:scale-[1.02]'
+                        : aiMessage === null ? 'cursor-not-allowed opacity-50 bg-blue-300'
+                        : 'cursor-pointer hover:bg-blue-700 bg-blue-600 active:scale-95 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hover:shadow-lg hover:-translate-y-[1px]'
                       }`}
-                      style={{
-                        background: phase === 'sending' ? undefined : 'linear-gradient(135deg, #3B82F6, #2563EB)',
-                        boxShadow: '0 2px 8px rgba(59,130,246,0.35)',
-                      }}
                     >
                       {phase === 'sending' ? <><Loader2 size={15} className="spin" /> Sending…</> : <><Send size={15} /> Send Now</>}
                     </button>
 
                     <button disabled={phase === 'sending'}
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-white cursor-pointer hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
-                      style={{ color: '#475569', border: '1px solid #D1D5DB' }}>
+                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-white text-slate-700 border border-slate-300 cursor-pointer hover:bg-slate-50 transition-all duration-300 active:scale-95 focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:opacity-40 disabled:cursor-not-allowed hover:-translate-y-[1px]"
+                    >
                       <Pencil size={14} /> Edit
                     </button>
 
                     <button onClick={phase === 'idle' ? handleDismiss : undefined} disabled={phase === 'sending'}
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-transparent cursor-pointer hover:text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed"
-                      style={{ color: '#94A3B8' }}>
+                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-500 bg-transparent cursor-pointer hover:text-slate-800 transition-all duration-300 active:scale-95 focus:ring-2 focus:ring-slate-300 focus:ring-offset-2 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100"
+                    >
                       <X size={14} /> Dismiss
                     </button>
                   </div>

@@ -45,12 +45,7 @@ export function WidgetShell({ widget, children }) {
   const Icon = widget.icon
   return (
     <div
-      className="rounded-2xl overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-px"
-      style={{
-        background: 'white',
-        border: '1px solid #F1F3F5',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.02)',
-      }}
+      className="rounded-xl overflow-hidden bg-white border border-slate-200/60 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
     >
       <div className="flex items-center justify-between px-5 pt-5 pb-3">
         <div className="flex items-center gap-2.5">

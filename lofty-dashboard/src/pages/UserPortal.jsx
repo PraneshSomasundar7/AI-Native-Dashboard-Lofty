@@ -368,7 +368,7 @@ export default function UserPortal() {
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-slate-50 font-['DM_Sans']">
 
       {/* ── Top Nav ── */}
       <header className="sticky top-0 z-50"
@@ -812,17 +812,10 @@ export default function UserPortal() {
                   const agentColor = AGENT_COLORS[listing.agent_email] || { bg: '#F8FAFC', text: '#64748B', border: '#E2E8F0' }
                   return (
                     <div key={listing.id}
-                      className="rounded-2xl overflow-hidden cursor-pointer group"
-                      style={{
-                        background: 'white', border: '1px solid #F1F3F5',
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.02)',
-                        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                      }}
-                      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.10)' }}
-                      onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.02)' }}
+                      className="rounded-2xl overflow-hidden cursor-pointer group bg-white border border-slate-200/60 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                       onClick={() => handleCardClick(listing)}
                     >
-                      <div className="relative h-48 overflow-hidden">
+                      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-t-2xl">
                         <img src={listing.image_url} alt={listing.title}
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
                         <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.32) 0%, transparent 55%)' }} />
@@ -858,10 +851,10 @@ export default function UserPortal() {
                             <span className="text-xs font-medium" style={{ color: agentColor.text }}>{listing.agent_name}</span>
                           </div>
                         )}
-                        <div className="flex items-center gap-4 mt-3 pt-3" style={{ borderTop: '1px solid #F1F3F5' }}>
-                          <span className="text-xs text-gray-500 flex items-center gap-1"><Bed size={13} color="#94A3B8" /> {bed} Beds</span>
-                          <span className="text-xs text-gray-500 flex items-center gap-1"><Bath size={13} color="#94A3B8" /> {bath} Baths</span>
-                          <span className="text-xs text-gray-500 flex items-center gap-1"><Maximize size={13} color="#94A3B8" /> {sqft} sqft</span>
+                        <div className="flex items-center gap-2 mt-3 pt-3 flex-wrap" style={{ borderTop: '1px solid #F1F3F5' }}>
+                          <span className="text-sm font-medium bg-slate-100 text-slate-700 px-3 py-1 rounded-full flex items-center gap-1.5"><Bed size={13} className="text-slate-500" /> {bed} Beds</span>
+                          <span className="text-sm font-medium bg-slate-100 text-slate-700 px-3 py-1 rounded-full flex items-center gap-1.5"><Bath size={13} className="text-slate-500" /> {bath} Baths</span>
+                          <span className="text-sm font-medium bg-slate-100 text-slate-700 px-3 py-1 rounded-full flex items-center gap-1.5"><Maximize size={13} className="text-slate-500" /> {sqft} sqft</span>
                         </div>
                       </div>
                     </div>

@@ -498,7 +498,7 @@ export default function LoftyDashboard() {
   }, [handleAlertDismiss, agentEmail, agentFullName, aiTaskId])
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-slate-50 font-['DM_Sans']">
       {showTour && <GuidedTour onComplete={handleTourComplete} agentName={agentFirstName} />}
       <Navbar activeNav={activeNav} setActiveNav={setActiveNav} />
 
