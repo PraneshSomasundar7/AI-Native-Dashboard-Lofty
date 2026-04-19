@@ -372,7 +372,7 @@ export default function AuthPage() {
                 <div className="flex flex-col gap-1 text-xs text-gray-500">
                   <div className="flex justify-between">
                     <span>
-                      <strong>Agent:</strong> james@lofty.com
+                      <strong>Agent:</strong> agent6@gmail.com
                     </span>
                     <span className="text-gray-400">agent123</span>
                   </div>

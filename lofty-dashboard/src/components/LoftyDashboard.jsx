@@ -15,14 +15,16 @@ import UpdatesCard from './widgets/UpdatesCard'
 import { getInitialWidgetColumns } from '../data/widgetData'
 import { generateBriefingInsights } from '../data/briefingEngine'
 import { insforge } from '../lib/insforge'
+import GuidedTour from './GuidedTour'
+import NavViews from './NavViews'
 
 const widgetRenderers = {
-  "Today's Tasks":      TasksCard,
+  "Today's Tasks": TasksCard,
   'Need Keep In Touch': KeepInTouchCard,
-  Transactions:         TransactionsCard,
-  'My Listings':        ListingsCard,
-  'Hot Sheets':         HotSheetsCard,
-  'New Updates':        UpdatesCard,
+  Transactions: TransactionsCard,
+  'My Listings': ListingsCard,
+  'Hot Sheets': HotSheetsCard,
+  'New Updates': UpdatesCard,
 }
 
 const MAX_FEED = 20
@@ -50,37 +52,49 @@ async function generateAIMessage({ leadName, propertyTitle, agentFirstName, view
 
 export default function LoftyDashboard() {
   const { user } = useAuth()
-  const agentEmail     = user?.email || ''
+  const agentEmail = user?.email || ''
   const agentFirstName = user?.full_name?.split(' ')[0] || 'Agent'
-  const agentFullName  = user?.full_name || agentFirstName
+  const agentFullName = user?.full_name || agentFirstName
 
-  const [activeNav, setActiveNav]         = useState('People')
-  const [mounted, setMounted]             = useState(false)
+  const [activeNav, setActiveNav] = useState('People')
+  const [mounted, setMounted] = useState(false)
   const [widgetColumns, setWidgetColumns] = useState(getInitialWidgetColumns)
 
-  const [removingItemId, setRemovingItemId]   = useState(null)
-  const [newUpdateId, setNewUpdateId]         = useState(null)
+  const [showTour, setShowTour] = useState(false)
+  useEffect(() => {
+    if (user?.email && !localStorage.getItem(`lofty_tour_${user.email}`)) {
+      setShowTour(true)
+    }
+  }, [user?.email]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleTourComplete = useCallback(() => {
+    if (user?.email) localStorage.setItem(`lofty_tour_${user.email}`, '1')
+    setShowTour(false)
+  }, [user?.email])
+
+  const [removingItemId, setRemovingItemId] = useState(null)
+  const [newUpdateId, setNewUpdateId] = useState(null)
   const [flashingWidgets, setFlashingWidgets] = useState(new Set())
 
   // Tracks the id of the AI-generated task currently shown in Today's Tasks
-  const [aiTaskId, setAiTaskId]               = useState('kristin-watson-task')
+  const [aiTaskId, setAiTaskId] = useState('kristin-watson-task')
 
   // Live feed — only events for THIS agent's properties
   const [liveActivities, setLiveActivities] = useState([])
 
   // Agent messages panel: sent messages + buyer acceptances
-  const [agentMessages, setAgentMessages]   = useState([])   // sent by this agent
-  const [buyerReplies, setBuyerReplies]     = useState([])   // is_acceptance=true to this agent
-  const [msgPanelOpen, setMsgPanelOpen]     = useState(true)
+  const [agentMessages, setAgentMessages] = useState([])   // sent by this agent
+  const [buyerReplies, setBuyerReplies] = useState([])   // is_acceptance=true to this agent
+  const [msgPanelOpen, setMsgPanelOpen] = useState(true)
 
   // AI alert state
-  const [liveAlert, setLiveAlert]           = useState(null)
+  const [liveAlert, setLiveAlert] = useState(null)
   const [dismissedLeads, setDismissedLeads] = useState(new Set())
-  const liveAlertRef                        = useRef(null)
-  const dismissedLeadsRef                   = useRef(new Set())
+  const liveAlertRef = useRef(null)
+  const dismissedLeadsRef = useRef(new Set())
 
-  useEffect(() => { liveAlertRef.current       = liveAlert },       [liveAlert])
-  useEffect(() => { dismissedLeadsRef.current  = dismissedLeads },  [dismissedLeads])
+  useEffect(() => { liveAlertRef.current = liveAlert }, [liveAlert])
+  useEffect(() => { dismissedLeadsRef.current = dismissedLeads }, [dismissedLeads])
   useEffect(() => { setMounted(true) }, [])
 
   // ── Fetch this agent's listings for My Listings widget ────────────────────
@@ -107,13 +121,13 @@ export default function LoftyDashboard() {
       })
 
       const items = props.map(p => ({
-        id:      `lst-${p.id}`,
+        id: `lst-${p.id}`,
         address: p.title,
-        status:  'Active',
-        price:   p.price >= 1_000_000
+        status: 'Active',
+        price: p.price >= 1_000_000
           ? `$${(p.price / 1_000_000).toFixed(1)}M`
           : `$${p.price.toLocaleString('en-US')}`,
-        views:   viewMap[p.title] || 0,
+        views: viewMap[p.title] || 0,
       }))
 
       if (!cancelled) {
@@ -147,13 +161,13 @@ export default function LoftyDashboard() {
       if (cancelled || !leads?.length) return
 
       const activities = leads.map(l => ({
-        id:             `init-${l.id}`,
-        name:           l.name           || 'Unknown User',
-        propertyTitle:  l.property_title || 'Unknown Property',
-        viewCount:      l.view_count     || 0,
-        leadScore:      l.lead_score     || 0,
+        id: `init-${l.id}`,
+        name: l.name || 'Unknown User',
+        propertyTitle: l.property_title || 'Unknown Property',
+        viewCount: l.view_count || 0,
+        leadScore: l.lead_score || 0,
         isHighInterest: (l.view_count || 0) >= 3 || (l.lead_score || 0) >= 70,
-        time:           l.last_activity ? new Date(l.last_activity) : new Date(),
+        time: l.last_activity ? new Date(l.last_activity) : new Date(),
       }))
 
       if (!cancelled) setLiveActivities(activities)
@@ -161,19 +175,19 @@ export default function LoftyDashboard() {
       // Auto-surface AOS alert for the most recent high-interest lead
       const topLead = leads.find(l => (l.view_count || 0) >= 3 || (l.lead_score || 0) >= 70)
       if (topLead && !dismissedLeadsRef.current.has(`init-${topLead.id}`)) {
-        const alertId  = `init-${topLead.id}`
-        const taskId   = `ai-task-${topLead.id}`
+        const alertId = `init-${topLead.id}`
+        const taskId = `ai-task-${topLead.id}`
         const leadName = topLead.name || 'Unknown User'
         const propTitle = topLead.property_title || 'Unknown Property'
 
         setLiveAlert({
-          leadId:        alertId,
+          leadId: alertId,
           leadName,
-          leadEmail:     topLead.email || '',
+          leadEmail: topLead.email || '',
           propertyTitle: propTitle,
-          leadScore:     topLead.lead_score  || 0,
-          viewCount:     topLead.view_count  || 0,
-          aiMessage:     null,
+          leadScore: topLead.lead_score || 0,
+          viewCount: topLead.view_count || 0,
+          aiMessage: null,
         })
 
         // Update Today's Tasks AI item to reflect the real buyer's name
@@ -210,7 +224,7 @@ export default function LoftyDashboard() {
           leadName,
           propertyTitle: propTitle,
           agentFirstName,
-          viewCount:     topLead.view_count || 0,
+          viewCount: topLead.view_count || 0,
         })
         if (!cancelled) {
           setLiveAlert(prev => prev?.leadId === alertId ? { ...prev, aiMessage: aiMsg } : prev)
@@ -240,11 +254,11 @@ export default function LoftyDashboard() {
 
           const {
             id,
-            name           = 'Unknown User',
-            email          = '',
+            name = 'Unknown User',
+            email = '',
             property_title = 'Unknown Property',
-            view_count     = 0,
-            lead_score     = 0,
+            view_count = 0,
+            lead_score = 0,
           } = payload
 
           const isHighInterest = view_count >= 3 || lead_score >= 70
@@ -253,13 +267,13 @@ export default function LoftyDashboard() {
           setLiveActivities(prev => {
             const withoutStale = prev.filter(a => a.id !== `init-${id}`)
             return [{
-              id:            `${id}-${Date.now()}`,
+              id: `${id}-${Date.now()}`,
               name,
               propertyTitle: property_title,
-              viewCount:     view_count,
-              leadScore:     lead_score,
+              viewCount: view_count,
+              leadScore: lead_score,
               isHighInterest,
-              time:          new Date(),
+              time: new Date(),
             }, ...withoutStale.slice(0, MAX_FEED - 1)]
           })
 
@@ -300,21 +314,21 @@ export default function LoftyDashboard() {
           if (isHighInterest && !dismissedLeadsRef.current.has(id)) {
             // Set alert immediately (aiMessage = null → shows loading spinner in AOS)
             setLiveAlert({
-              leadId:        id,
-              leadName:      name,
-              leadEmail:     email,
+              leadId: id,
+              leadName: name,
+              leadEmail: email,
               propertyTitle: property_title,
-              leadScore:     lead_score,
-              viewCount:     view_count,
-              aiMessage:     null,
+              leadScore: lead_score,
+              viewCount: view_count,
+              aiMessage: null,
             })
 
             // Generate AI message async — update alert once ready
             const aiMsg = await generateAIMessage({
-              leadName:      name,
+              leadName: name,
               propertyTitle: property_title,
               agentFirstName,
-              viewCount:     view_count,
+              viewCount: view_count,
             })
 
             if (active) {
@@ -391,7 +405,7 @@ export default function LoftyDashboard() {
           .eq('to_email', agentEmail)
           .order('created_at', { ascending: false })
           .limit(50)
-          
+
         const replies = repliesRaw ? repliesRaw.filter(m => m.from_email !== agentEmail) : []
         if (active) setBuyerReplies(replies)
 
@@ -445,8 +459,8 @@ export default function LoftyDashboard() {
     }, 600)
 
     setTimeout(() => {
-      const alert         = liveAlertRef.current
-      const leadName      = alert?.leadName      || 'Lead'
+      const alert = liveAlertRef.current
+      const leadName = alert?.leadName || 'Lead'
       const propertyTitle = alert?.propertyTitle || 'the property'
 
       setWidgetColumns(prev =>
@@ -470,10 +484,10 @@ export default function LoftyDashboard() {
     if (alert && aiMessage) {
       try {
         const { error } = await insforge.database.from('messages').insert([{
-          from_email:     agentEmail,
-          from_name:      agentFullName,
-          to_email:       alert.leadEmail || 'buyer@example.com',
-          content:        aiMessage,
+          from_email: agentEmail,
+          from_name: agentFullName,
+          to_email: alert.leadEmail || 'buyer@example.com',
+          content: aiMessage,
           property_title: alert.propertyTitle,
         }])
         if (error) console.error("Message deliver error:", error)
@@ -484,7 +498,8 @@ export default function LoftyDashboard() {
   }, [handleAlertDismiss, agentEmail, agentFullName, aiTaskId])
 
   return (
-    <div className="min-h-screen" style={{ background: '#F8F9FB' }}>
+    <div className="min-h-screen">
+      {showTour && <GuidedTour onComplete={handleTourComplete} agentName={agentFirstName} />}
       <Navbar activeNav={activeNav} setActiveNav={setActiveNav} />
 
       <main className="max-w-[1440px] mx-auto px-6 pb-12">
@@ -539,7 +554,7 @@ export default function LoftyDashboard() {
                     style={{ background: 'linear-gradient(135deg, #F0FDF4, #ECFDF5)' }}>
                     <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-xs font-bold text-white"
                       style={{ background: 'linear-gradient(135deg, #10B981, #059669)' }}>
-                      {reply.from_name?.split(' ').map(n => n[0]).join('').slice(0,2) || 'B'}
+                      {reply.from_name?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'B'}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
@@ -594,39 +609,47 @@ export default function LoftyDashboard() {
           </div>
         )}
 
-        <div id="section-live-feed">
-          <LiveActivityFeed activities={liveActivities} />
-        </div>
-
-        <div id="section-morning-briefing">
-          <MorningBriefing widgetColumns={widgetColumns} liveActivities={liveActivities} />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {widgetColumns.map((column, colIdx) => (
-            <div key={colIdx} className="flex flex-col gap-5">
-              {column.map((widget, widgetIdx) => {
-                const Component = widgetRenderers[widget.title]
-                if (!Component) return null
-                const extraProps = {}
-                if (widget.title === "Today's Tasks") extraProps.removingItemId = removingItemId
-                if (widget.title === 'New Updates')   extraProps.newItemId      = newUpdateId
-                const isFlashing = flashingWidgets.has(widget.title)
-                const sectionId = `section-${widget.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '')}`
-                return (
-                  <div key={widget.title}
-                    id={sectionId}
-                    className={`${mounted ? 'widget-appear' : ''} ${isFlashing ? 'ripple-flash' : ''}`}
-                    style={{ animationDelay: mounted && !isFlashing ? `${colIdx * 100 + widgetIdx * 150}ms` : undefined, animationFillMode: 'forwards' }}>
-                    <Component widget={widget} {...extraProps} />
-                  </div>
-                )
-              })}
+        {activeNav === 'People' ? (
+          <>
+            <div id="section-live-feed">
+              <LiveActivityFeed activities={liveActivities} />
             </div>
-          ))}
-        </div>
 
-        <AICommandCenter onNavigate={setActiveNav} widgetData={widgetData} />
+            <div id="section-morning-briefing">
+              <MorningBriefing widgetColumns={widgetColumns} liveActivities={liveActivities} />
+            </div>
+
+            <div id="section-widgets" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {widgetColumns.map((column, colIdx) => (
+                <div key={colIdx} className="flex flex-col gap-5">
+                  {column.map((widget, widgetIdx) => {
+                    const Component = widgetRenderers[widget.title]
+                    if (!Component) return null
+                    const extraProps = {}
+                    if (widget.title === "Today's Tasks") extraProps.removingItemId = removingItemId
+                    if (widget.title === 'New Updates') extraProps.newItemId = newUpdateId
+                    const isFlashing = flashingWidgets.has(widget.title)
+                    const sectionId = `section-${widget.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '')}`
+                    return (
+                      <div key={widget.title}
+                        id={sectionId}
+                        className={`${mounted ? 'widget-appear' : ''} ${isFlashing ? 'ripple-flash' : ''}`}
+                        style={{ animationDelay: mounted && !isFlashing ? `${colIdx * 100 + widgetIdx * 150}ms` : undefined, animationFillMode: 'forwards' }}>
+                        <Component widget={widget} {...extraProps} />
+                      </div>
+                    )
+                  })}
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <NavViews activeNav={activeNav} />
+        )}
+
+        <div id="section-ai-command">
+          <AICommandCenter onNavigate={setActiveNav} widgetData={widgetData} />
+        </div>
       </main>
     </div>
   )

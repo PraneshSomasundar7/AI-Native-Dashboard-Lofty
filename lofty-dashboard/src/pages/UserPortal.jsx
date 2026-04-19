@@ -36,9 +36,11 @@ function parseSpecs(specs = '') {
 }
 
 const AGENT_COLORS = {
-  'agent1@gmail.com': { bg: '#EFF6FF', text: '#1D4ED8', border: '#BFDBFE' },
-  'agent2@gmail.com': { bg: '#FDF4FF', text: '#7E22CE', border: '#E9D5FF' },
-  'agent3@gmail.com': { bg: '#F0FDF4', text: '#15803D', border: '#BBF7D0' },
+  'agent6@gmail.com':  { bg: '#EFF6FF', text: '#1D4ED8', border: '#BFDBFE' },
+  'agent7@gmail.com':  { bg: '#FDF4FF', text: '#7E22CE', border: '#E9D5FF' },
+  'agent8@gmail.com':  { bg: '#F0FDF4', text: '#15803D', border: '#BBF7D0' },
+  'agent9@gmail.com':  { bg: '#FFF7ED', text: '#C2410C', border: '#FED7AA' },
+  'agent10@gmail.com': { bg: '#F0FDFA', text: '#0F766E', border: '#99F6E4' },
 }
 
 function timeAgo(date) {
@@ -153,6 +155,7 @@ export default function UserPortal() {
         const { data } = await insforge.database
           .from('messages')
           .select('*')
+          .eq('to_email', user.email)
           .order('created_at', { ascending: false })
           .limit(20)
         if (!active || !data?.length) return
@@ -182,8 +185,9 @@ export default function UserPortal() {
         await insforge.realtime.subscribe('messages')
         insforge.realtime.on('NEW_message', (payload) => {
           if (!active) return
-          // Skip if it's a message we sent or if we've already accepted it
+          // Skip if it's a message we sent, not for us, or already accepted
           if (payload.from_email === user.email || acceptedMsgIds.has(payload.id)) return
+          if (payload.to_email && payload.to_email !== user.email) return
           lastMsgIdRef.current = payload.id
           setIncomingMsg(payload)
           setMsgDismissed(false)
@@ -248,6 +252,7 @@ export default function UserPortal() {
         const { data } = await insforge.database
           .from('messages')
           .select('*')
+          .eq('to_email', user.email)
           .order('created_at', { ascending: false })
           .limit(50)
         if (!active || !data) return
@@ -363,7 +368,7 @@ export default function UserPortal() {
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen" style={{ background: '#F8F9FB' }}>
+    <div className="min-h-screen">
 
       {/* ── Top Nav ── */}
       <header className="sticky top-0 z-50"
@@ -779,7 +784,7 @@ export default function UserPortal() {
               <div>
                 <h2 className="text-lg font-bold text-gray-800">Featured Listings</h2>
                 <p className="text-xs text-gray-400 mt-0.5">
-                  {loadingProps ? 'Loading...' : `${displayedProperties.length} properties from 3 agents`}
+                  {loadingProps ? 'Loading...' : `${displayedProperties.length} properties from 5 agents`}
                 </p>
               </div>
               <div className="flex items-center gap-2">

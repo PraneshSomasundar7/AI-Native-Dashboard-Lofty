@@ -54,6 +54,7 @@ export default function Navbar({ activeNav, setActiveNav }) {
 
   return (
     <header
+      id="tour-navbar"
       className="sticky top-0 z-50"
       style={{
         background: 'white',
