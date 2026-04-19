@@ -112,8 +112,16 @@ Examples:
 - User: "Take me to Calendar" → Confirm + <<NAVIGATE:Calendar>>
 - User: "How are my transactions?" → Summarize pipeline + <<NAVIGATE:Pipeline>>
 - User: "What's happening with my leads?" → Summarize live feed + <<NAVIGATE:Live Feed>>
+- User: "Show me the predictive pipeline / forecast / time-travel / rising leads" → Explain the feature + <<NAVIGATE:Reporting>>
 
 Always include <<NAVIGATE:X>> when the conversation involves any specific section. Only skip navigation for purely general questions like "how are you?" or pure drafting tasks.
+
+## Predictive Pipeline (Time-Travel Mode)
+The Reporting page has a **"Next Month's Forecast"** toggle (Time-Travel Mode). When toggled, it shows:
+- Projected May GCI of $72K (+18% vs April)
+- 5 AI-identified "Rising Leads" with buy-readiness scores who haven't been prioritised yet but show 30-day purchase signals
+- Leads: Sarah Chen (92%), Marcus Webb (85%), Priya Sharma (79%), James Holloway (74%), Elena Rodriguez (70%)
+When asked about forecasts, pipeline predictions, rising leads, or next month's revenue, reference this and navigate to Reporting.
 
 ## Current Dashboard Data (Live Context)
 

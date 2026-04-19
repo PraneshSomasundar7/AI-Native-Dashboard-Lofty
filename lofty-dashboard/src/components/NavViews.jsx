@@ -432,7 +432,53 @@ const SOURCES = [
   { label: 'Other', pct: 5, color: '#94A3B8' },
 ]
 
+const FORECAST_STATS = [
+  { label: 'Projected GCI (May)', value: '$72,000', icon: DollarSign, color: '#10B981', delta: '+18%' },
+  { label: 'Projected Volume', value: '$2.8M', icon: TrendingUp, color: '#3B82F6', delta: '+30%' },
+  { label: 'Pipeline Deals', value: '19', icon: FileText, color: '#8B5CF6', delta: '+5' },
+  { label: 'Forecast Conversion', value: '28%', icon: Activity, color: '#F59E0B', delta: '+6%' },
+]
+
+const PROJECTED_GCI = [
+  { month: 'Jan', gci: 42000, vol: 1800000, projected: false },
+  { month: 'Feb', gci: 38000, vol: 1550000, projected: false },
+  { month: 'Mar', gci: 61000, vol: 2400000, projected: false },
+  { month: 'Apr', gci: 54000, vol: 2150000, projected: false },
+  { month: 'May', gci: 72000, vol: 2800000, projected: true },
+]
+const MAX_PROJ_GCI = Math.max(...PROJECTED_GCI.map(m => m.gci))
+
+const RISING_LEADS = [
+  {
+    name: 'Sarah Chen', avatar: 'SC', color: '#3B82F6', readiness: 92,
+    signal: 'Price range narrowing across 8 listings',
+    behaviors: ['8 property views', 'Compared 3 similar homes', 'Saved 2 listings'],
+  },
+  {
+    name: 'Marcus Webb', avatar: 'MW', color: '#8B5CF6', readiness: 85,
+    signal: 'Repeat visits to same property — 5× in 7 days',
+    behaviors: ['5 visits to 742 Elm St', 'Shared listing externally', 'Viewed floor plans'],
+  },
+  {
+    name: 'Priya Sharma', avatar: 'PS', color: '#EC4899', readiness: 79,
+    signal: 'Active search acceleration — 12 views this week',
+    behaviors: ['12 listing views this week', 'Requested 2 virtual tours', '3× session increase'],
+  },
+  {
+    name: 'James Holloway', avatar: 'JH', color: '#F59E0B', readiness: 74,
+    signal: 'Financing research alongside listing views',
+    behaviors: ['4 listing views', 'Mortgage calc activity', 'Neighborhood guide downloads'],
+  },
+  {
+    name: 'Elena Rodriguez', avatar: 'ER', color: '#10B981', readiness: 70,
+    signal: 'Post open house re-engagement spike',
+    behaviors: ['Attended open house', '3 listing return visits', 'Emailed 2 questions'],
+  },
+]
+
 function ReportingView() {
+  const [forecastMode, setForecastMode] = useState(false)
+
   const ytd = [
     { label: 'GCI YTD', value: '$195,000', icon: DollarSign, color: '#10B981' },
     { label: 'Volume YTD', value: '$7.9M', icon: TrendingUp, color: '#3B82F6' },
@@ -442,99 +488,263 @@ function ReportingView() {
 
   return (
     <div style={{ paddingTop: 24 }}>
+      {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div>
           <h2 style={{ fontSize: 22, fontWeight: 800, color: '#1E293B', margin: 0 }}>Reporting</h2>
-          <p style={{ fontSize: 13, color: '#64748B', margin: '2px 0 0' }}>Year-to-date performance metrics</p>
+          <p style={{ fontSize: 13, color: '#64748B', margin: '2px 0 0' }}>
+            {forecastMode ? 'AI-powered 30-day pipeline forecast' : 'Year-to-date performance metrics'}
+          </p>
         </div>
-        <button style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          padding: '9px 16px', borderRadius: 10, border: '1px solid #E2E8F0',
-          background: 'white', color: '#374151', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-        }}>
-          <FileText size={14} /> Export Report
-        </button>
+        <div className="flex items-center gap-3">
+          {/* Time-Travel Toggle */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 2,
+            background: forecastMode ? '#EEF2FF' : '#F1F5F9',
+            borderRadius: 12, padding: 3,
+            border: `1px solid ${forecastMode ? '#C7D2FE' : '#E2E8F0'}`,
+            transition: 'all 0.3s ease',
+          }}>
+            <button
+              onClick={() => setForecastMode(false)}
+              style={{
+                padding: '6px 14px', borderRadius: 9, fontSize: 12, fontWeight: 600,
+                cursor: 'pointer', border: 'none',
+                background: !forecastMode ? 'white' : 'transparent',
+                color: !forecastMode ? '#1E293B' : '#94A3B8',
+                boxShadow: !forecastMode ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                transition: 'all 0.2s ease',
+              }}
+            >Today's View</button>
+            <button
+              onClick={() => setForecastMode(true)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '6px 14px', borderRadius: 9, fontSize: 12, fontWeight: 600,
+                cursor: 'pointer', border: 'none',
+                background: forecastMode ? 'linear-gradient(135deg, #6366F1, #8B5CF6)' : 'transparent',
+                color: forecastMode ? 'white' : '#94A3B8',
+                boxShadow: forecastMode ? '0 2px 8px rgba(99,102,241,0.4)' : 'none',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              <Zap size={11} /> Next Month's Forecast
+            </button>
+          </div>
+          <button style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            padding: '9px 16px', borderRadius: 10, border: '1px solid #E2E8F0',
+            background: 'white', color: '#374151', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+          }}>
+            <FileText size={14} /> Export Report
+          </button>
+        </div>
       </div>
 
-      {/* YTD stat cards */}
+      {/* Stat cards */}
       <div className="grid grid-cols-4 gap-4 mb-5">
-        {ytd.map(s => (
-          <div key={s.label} style={{ ...card, padding: '16px 18px', display: 'flex', alignItems: 'center', gap: 14 }}>
+        {(forecastMode ? FORECAST_STATS : ytd).map(s => (
+          <div key={s.label} style={{
+            ...card, padding: '16px 18px', display: 'flex', alignItems: 'center', gap: 14,
+            ...(forecastMode ? { border: '1px solid #C7D2FE' } : {}),
+          }}>
             <div style={{ width: 40, height: 40, borderRadius: 10, background: s.color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <s.icon size={18} color={s.color} />
             </div>
             <div>
               <div style={{ fontSize: 22, fontWeight: 800, color: '#1E293B', lineHeight: 1.1 }}>{s.value}</div>
               <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>{s.label}</div>
+              {forecastMode && s.delta && (
+                <div style={{ fontSize: 11, color: '#10B981', fontWeight: 700, marginTop: 2 }}>{s.delta} projected</div>
+              )}
             </div>
           </div>
         ))}
       </div>
 
-      <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 280px' }}>
-        {/* Monthly GCI chart */}
-        <div style={{ ...card, padding: 20 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#1E293B', marginBottom: 20 }}>Monthly GCI (Jan – Apr 2026)</div>
-          <div className="flex flex-col gap-4">
-            {MONTHLY_GCI.map(m => (
-              <div key={m.month} className="flex items-center gap-4">
-                <span style={{ fontSize: 12, fontWeight: 600, color: '#64748B', width: 28 }}>{m.month}</span>
-                <div style={{ flex: 1, height: 22, background: '#F1F5F9', borderRadius: 6, overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${(m.gci / MAX_GCI) * 100}%`, background: 'linear-gradient(90deg, #3B82F6, #60A5FA)', borderRadius: 6, transition: 'width 0.4s ease' }} />
-                </div>
-                <span style={{ fontSize: 12, fontWeight: 700, color: '#1E293B', width: 70, textAlign: 'right' }}>${(m.gci / 1000).toFixed(0)}K</span>
+      {forecastMode ? (
+        /* ── Next Month's Forecast ── */
+        <>
+          <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 280px' }}>
+            {/* Projected GCI chart with May bar */}
+            <div style={{ ...card, padding: 20, border: '1px solid #C7D2FE' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#1E293B', marginBottom: 2 }}>Projected GCI — Including May Forecast</div>
+              <div style={{ fontSize: 11, color: '#6366F1', fontWeight: 600, marginBottom: 16 }}>AI-extrapolated from current lead engagement velocity</div>
+              <div className="flex flex-col gap-4">
+                {PROJECTED_GCI.map(m => (
+                  <div key={m.month} className="flex items-center gap-4">
+                    <span style={{ fontSize: 12, fontWeight: 600, color: m.projected ? '#6366F1' : '#64748B', width: 28 }}>{m.month}</span>
+                    <div style={{ flex: 1, height: 22, background: '#F1F5F9', borderRadius: 6, overflow: 'hidden' }}>
+                      <div style={{
+                        height: '100%',
+                        width: `${(m.gci / MAX_PROJ_GCI) * 100}%`,
+                        background: m.projected ? 'linear-gradient(90deg, #6366F1, #8B5CF6)' : 'linear-gradient(90deg, #3B82F6, #60A5FA)',
+                        borderRadius: 6, transition: 'width 0.5s ease',
+                        opacity: m.projected ? 0.85 : 1,
+                      }} />
+                    </div>
+                    <div className="flex items-center gap-1.5" style={{ width: 100, justifyContent: 'flex-end' }}>
+                      {m.projected && <span style={{ fontSize: 9, fontWeight: 700, color: '#6366F1', background: '#EEF2FF', padding: '1px 5px', borderRadius: 4 }}>FORECAST</span>}
+                      <span style={{ fontSize: 12, fontWeight: 700, color: m.projected ? '#6366F1' : '#1E293B' }}>${(m.gci / 1000).toFixed(0)}K</span>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+              <div style={{ marginTop: 16, padding: '10px 14px', background: '#EEF2FF', borderRadius: 10 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#6366F1' }}>May Forecast Basis</div>
+                <div style={{ fontSize: 11, color: '#4338CA', marginTop: 4, lineHeight: 1.5 }}>
+                  5 rising leads × avg deal size $560K × 2.6% commission = projected $72K GCI
+                </div>
+              </div>
+            </div>
+
+            {/* Lead sources + projected funnel */}
+            <div style={{ ...card, padding: 20, border: '1px solid #C7D2FE' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#1E293B', marginBottom: 16 }}>Lead Sources</div>
+              <div className="flex flex-col gap-3">
+                {SOURCES.map(s => (
+                  <div key={s.label}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span style={{ fontSize: 12, color: '#374151', fontWeight: 600 }}>{s.label}</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: s.color }}>{s.pct}%</span>
+                    </div>
+                    <div style={{ height: 6, background: '#F1F5F9', borderRadius: 3, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${s.pct}%`, background: s.color, borderRadius: 3 }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid #F1F5F9' }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#1E293B', marginBottom: 12 }}>Projected Funnel (May)</div>
+                {[
+                  { stage: 'Active Leads', count: 163, color: '#3B82F6' },
+                  { stage: 'Qualified', count: 81, color: '#8B5CF6' },
+                  { stage: 'Under Offer', count: 29, color: '#F59E0B' },
+                  { stage: 'Forecast Close', count: 19, color: '#10B981' },
+                ].map((f, i) => (
+                  <div key={i} className="flex items-center justify-between py-2" style={{ borderBottom: i < 3 ? '1px solid #F1F5F9' : 'none' }}>
+                    <span style={{ fontSize: 12, color: '#64748B' }}>{f.stage}</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: f.color }}>{f.count}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
-          {/* Volume bars */}
-          <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid #F1F5F9' }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#1E293B', marginBottom: 16 }}>Monthly Volume</div>
-            {MONTHLY_GCI.map(m => (
-              <div key={m.month + 'v'} className="flex items-center gap-4 mb-3">
-                <span style={{ fontSize: 12, fontWeight: 600, color: '#64748B', width: 28 }}>{m.month}</span>
-                <div style={{ flex: 1, height: 22, background: '#F1F5F9', borderRadius: 6, overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${(m.vol / 2400000) * 100}%`, background: 'linear-gradient(90deg, #8B5CF6, #A78BFA)', borderRadius: 6 }} />
+          {/* AI Rising Leads */}
+          <div style={{ ...card, padding: 20, marginTop: 16, border: '1px solid #C7D2FE' }}>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <div className="flex items-center gap-2" style={{ marginBottom: 3 }}>
+                  <Zap size={15} color="#6366F1" />
+                  <span style={{ fontSize: 14, fontWeight: 800, color: '#1E293B' }}>AI Rising Leads — Predicted Buyers in 30 Days</span>
                 </div>
-                <span style={{ fontSize: 12, fontWeight: 700, color: '#1E293B', width: 70, textAlign: 'right' }}>${(m.vol / 1000000).toFixed(1)}M</span>
+                <p style={{ fontSize: 12, color: '#64748B', margin: 0 }}>
+                  These leads haven't been prioritised yet but show engagement patterns signalling readiness to buy.
+                </p>
               </div>
-            ))}
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#6366F1', background: '#EEF2FF', padding: '4px 10px', borderRadius: 8, whiteSpace: 'nowrap', flexShrink: 0 }}>
+                AI · Time-Travel Mode
+              </div>
+            </div>
+            <div className="grid grid-cols-5 gap-3">
+              {RISING_LEADS.map(lead => (
+                <div key={lead.name} style={{ background: '#FAFBFF', border: '1px solid #E0E7FF', borderRadius: 12, padding: '14px 12px' }}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div style={{ width: 32, height: 32, borderRadius: '50%', background: lead.color + '20', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <span style={{ fontSize: 11, fontWeight: 800, color: lead.color }}>{lead.avatar}</span>
+                    </div>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: '#1E293B', lineHeight: 1.2 }}>{lead.name}</span>
+                  </div>
+                  <div style={{ marginBottom: 10 }}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span style={{ fontSize: 10, color: '#64748B', fontWeight: 600 }}>Buy Readiness</span>
+                      <span style={{ fontSize: 11, fontWeight: 800, color: lead.color }}>{lead.readiness}%</span>
+                    </div>
+                    <div style={{ height: 5, background: '#E0E7FF', borderRadius: 3, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${lead.readiness}%`, background: lead.color, borderRadius: 3 }} />
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 10, color: '#4338CA', background: '#EEF2FF', padding: '5px 8px', borderRadius: 7, lineHeight: 1.4, marginBottom: 8 }}>
+                    {lead.signal}
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    {lead.behaviors.map((b, i) => (
+                      <div key={i} className="flex items-start gap-1.5">
+                        <div style={{ width: 4, height: 4, borderRadius: '50%', background: lead.color, marginTop: 4, flexShrink: 0 }} />
+                        <span style={{ fontSize: 10, color: '#64748B', lineHeight: 1.4 }}>{b}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      ) : (
+        /* ── Today's View (unchanged) ── */
+        <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 280px' }}>
+          {/* Monthly GCI chart */}
+          <div style={{ ...card, padding: 20 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#1E293B', marginBottom: 20 }}>Monthly GCI (Jan – Apr 2026)</div>
+            <div className="flex flex-col gap-4">
+              {MONTHLY_GCI.map(m => (
+                <div key={m.month} className="flex items-center gap-4">
+                  <span style={{ fontSize: 12, fontWeight: 600, color: '#64748B', width: 28 }}>{m.month}</span>
+                  <div style={{ flex: 1, height: 22, background: '#F1F5F9', borderRadius: 6, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${(m.gci / MAX_GCI) * 100}%`, background: 'linear-gradient(90deg, #3B82F6, #60A5FA)', borderRadius: 6, transition: 'width 0.4s ease' }} />
+                  </div>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#1E293B', width: 70, textAlign: 'right' }}>${(m.gci / 1000).toFixed(0)}K</span>
+                </div>
+              ))}
+            </div>
+            <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid #F1F5F9' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#1E293B', marginBottom: 16 }}>Monthly Volume</div>
+              {MONTHLY_GCI.map(m => (
+                <div key={m.month + 'v'} className="flex items-center gap-4 mb-3">
+                  <span style={{ fontSize: 12, fontWeight: 600, color: '#64748B', width: 28 }}>{m.month}</span>
+                  <div style={{ flex: 1, height: 22, background: '#F1F5F9', borderRadius: 6, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${(m.vol / 2400000) * 100}%`, background: 'linear-gradient(90deg, #8B5CF6, #A78BFA)', borderRadius: 6 }} />
+                  </div>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#1E293B', width: 70, textAlign: 'right' }}>${(m.vol / 1000000).toFixed(1)}M</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Lead sources */}
+          <div style={{ ...card, padding: 20 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#1E293B', marginBottom: 16 }}>Lead Sources</div>
+            <div className="flex flex-col gap-3">
+              {SOURCES.map(s => (
+                <div key={s.label}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span style={{ fontSize: 12, color: '#374151', fontWeight: 600 }}>{s.label}</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: s.color }}>{s.pct}%</span>
+                  </div>
+                  <div style={{ height: 6, background: '#F1F5F9', borderRadius: 3, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${s.pct}%`, background: s.color, borderRadius: 3 }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid #F1F5F9' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#1E293B', marginBottom: 12 }}>Conversion Funnel</div>
+              {[
+                { stage: 'Leads', count: 148, color: '#3B82F6' },
+                { stage: 'Qualified', count: 72, color: '#8B5CF6' },
+                { stage: 'Under Offer', count: 24, color: '#F59E0B' },
+                { stage: 'Closed', count: 14, color: '#10B981' },
+              ].map((f, i) => (
+                <div key={i} className="flex items-center justify-between py-2" style={{ borderBottom: i < 3 ? '1px solid #F1F5F9' : 'none' }}>
+                  <span style={{ fontSize: 12, color: '#64748B' }}>{f.stage}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: f.color }}>{f.count}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-
-        {/* Lead sources */}
-        <div style={{ ...card, padding: 20 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#1E293B', marginBottom: 16 }}>Lead Sources</div>
-          <div className="flex flex-col gap-3">
-            {SOURCES.map(s => (
-              <div key={s.label}>
-                <div className="flex items-center justify-between mb-1">
-                  <span style={{ fontSize: 12, color: '#374151', fontWeight: 600 }}>{s.label}</span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: s.color }}>{s.pct}%</span>
-                </div>
-                <div style={{ height: 6, background: '#F1F5F9', borderRadius: 3, overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${s.pct}%`, background: s.color, borderRadius: 3 }} />
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid #F1F5F9' }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#1E293B', marginBottom: 12 }}>Conversion Funnel</div>
-            {[
-              { stage: 'Leads', count: 148, color: '#3B82F6' },
-              { stage: 'Qualified', count: 72, color: '#8B5CF6' },
-              { stage: 'Under Offer', count: 24, color: '#F59E0B' },
-              { stage: 'Closed', count: 14, color: '#10B981' },
-            ].map((f, i) => (
-              <div key={i} className="flex items-center justify-between py-2" style={{ borderBottom: i < 3 ? '1px solid #F1F5F9' : 'none' }}>
-                <span style={{ fontSize: 12, color: '#64748B' }}>{f.stage}</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: f.color }}>{f.count}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   )
 }
