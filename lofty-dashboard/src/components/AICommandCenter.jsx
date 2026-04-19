@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { MessageSquare, X, Send, Bot, Sparkles, ArrowRight, Navigation } from 'lucide-react'
+import { MessageSquare, X, Send, Bot, Sparkles, ArrowRight, Navigation, Mic } from 'lucide-react'
 
 const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY
 const GROQ_MODEL = 'llama-3.3-70b-versatile'
@@ -243,9 +243,11 @@ export default function AICommandCenter({ onNavigate, widgetData }) {
   ])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isListening, setIsListening] = useState(false)
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
   const textareaRef = useRef(null)
+  const recognitionRef = useRef(null)
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -262,8 +264,42 @@ export default function AICommandCenter({ onNavigate, widgetData }) {
     el.style.height = Math.min(el.scrollHeight, 100) + 'px'
   }
 
-  async function sendMessage() {
-    const text = input.trim()
+  function startVoice() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (!SpeechRecognition) {
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: 'Voice input is not supported in this browser. Please use Chrome or Edge.',
+        isError: true,
+      }])
+      return
+    }
+
+    if (isListening) {
+      recognitionRef.current?.stop()
+      return
+    }
+
+    const recognition = new SpeechRecognition()
+    recognitionRef.current = recognition
+    recognition.continuous = false
+    recognition.interimResults = false
+    recognition.lang = 'en-US'
+
+    recognition.onstart = () => setIsListening(true)
+    recognition.onresult = e => {
+      const transcript = e.results[0][0].transcript.trim()
+      setIsListening(false)
+      if (transcript) sendMessage(transcript)
+    }
+    recognition.onerror = () => setIsListening(false)
+    recognition.onend = () => setIsListening(false)
+
+    recognition.start()
+  }
+
+  async function sendMessage(textOverride) {
+    const text = (textOverride !== undefined ? textOverride : input).trim()
     if (!text || isLoading) return
 
     const userMsg = { role: 'user', content: text }
@@ -456,7 +492,20 @@ export default function AICommandCenter({ onNavigate, widgetData }) {
               onBlur={e => (e.target.style.borderColor = '#E2E8F0')}
             />
             <button
-              onClick={sendMessage}
+              onClick={startVoice}
+              disabled={isLoading}
+              title={isListening ? 'Stop recording' : 'Speak your command'}
+              className="w-10 h-10 rounded-xl flex items-center justify-center transition-all shrink-0"
+              style={{
+                background: isListening ? '#EF4444' : '#F1F5F9',
+                color: isListening ? '#fff' : '#64748B',
+                animation: isListening ? 'micPulse 1.2s ease-in-out infinite' : 'none',
+              }}
+            >
+              <Mic size={15} />
+            </button>
+            <button
+              onClick={() => sendMessage()}
               disabled={!input.trim() || isLoading}
               className="w-10 h-10 rounded-xl flex items-center justify-center transition-all shrink-0"
               style={{
