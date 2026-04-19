@@ -1,9 +1,11 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { Mail, ChevronDown, CheckCircle2, MessageSquare } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import Navbar from './Navbar'
 import AOSActionZone from './AOSActionZone'
 import LiveActivityFeed from './LiveActivityFeed'
+import MorningBriefing from './MorningBriefing'
+import AICommandCenter from './AICommandCenter'
 import TasksCard from './widgets/TasksCard'
 import KeepInTouchCard from './widgets/KeepInTouchCard'
 import TransactionsCard from './widgets/TransactionsCard'
@@ -11,6 +13,7 @@ import ListingsCard from './widgets/ListingsCard'
 import HotSheetsCard from './widgets/HotSheetsCard'
 import UpdatesCard from './widgets/UpdatesCard'
 import { getInitialWidgetColumns } from '../data/widgetData'
+import { generateBriefingInsights } from '../data/briefingEngine'
 import { insforge } from '../lib/insforge'
 
 const widgetRenderers = {
@@ -345,6 +348,25 @@ export default function LoftyDashboard() {
     setLiveAlert(null)
   }, [])
 
+  // ── Flatten widget data for AI Command Center context ───────────────────
+  const widgetData = useMemo(() => {
+    const col0 = widgetColumns[0] || []
+    const col1 = widgetColumns[1] || []
+    const col2 = widgetColumns[2] || []
+
+    const briefingInsights = generateBriefingInsights(widgetColumns, liveActivities, agentFirstName)
+
+    return {
+      tasks: col0[0]?.items || [],
+      contacts: col0[1]?.items || [],
+      transactions: col1[0]?.items || [],
+      listings: col1[1]?.items || [],
+      hotSheets: col2[0]?.items || [],
+      briefingInsights,
+      liveActivities,
+    }
+  }, [widgetColumns, liveActivities, agentFirstName])
+
   // ── Poll agent inbox: sent messages + buyer acceptances ───────────────────
   const lastAcceptedMsgIdRef = useRef(null)
   useEffect(() => {
@@ -466,11 +488,13 @@ export default function LoftyDashboard() {
       <Navbar activeNav={activeNav} setActiveNav={setActiveNav} />
 
       <main className="max-w-[1440px] mx-auto px-6 pb-12">
-        <AOSActionZone
-          onActionComplete={handleActionComplete}
-          liveAlert={liveAlert}
-          onAlertDismiss={handleAlertDismiss}
-        />
+        <div id="section-aos">
+          <AOSActionZone
+            onActionComplete={handleActionComplete}
+            liveAlert={liveAlert}
+            onAlertDismiss={handleAlertDismiss}
+          />
+        </div>
 
         {/* ── Agent Messages Panel ── */}
         {(agentMessages.length > 0 || buyerReplies.length > 0) && (
@@ -570,7 +594,13 @@ export default function LoftyDashboard() {
           </div>
         )}
 
-        <LiveActivityFeed activities={liveActivities} />
+        <div id="section-live-feed">
+          <LiveActivityFeed activities={liveActivities} />
+        </div>
+
+        <div id="section-morning-briefing">
+          <MorningBriefing widgetColumns={widgetColumns} liveActivities={liveActivities} />
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {widgetColumns.map((column, colIdx) => (
@@ -582,8 +612,10 @@ export default function LoftyDashboard() {
                 if (widget.title === "Today's Tasks") extraProps.removingItemId = removingItemId
                 if (widget.title === 'New Updates')   extraProps.newItemId      = newUpdateId
                 const isFlashing = flashingWidgets.has(widget.title)
+                const sectionId = `section-${widget.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '')}`
                 return (
                   <div key={widget.title}
+                    id={sectionId}
                     className={`${mounted ? 'widget-appear' : ''} ${isFlashing ? 'ripple-flash' : ''}`}
                     style={{ animationDelay: mounted && !isFlashing ? `${colIdx * 100 + widgetIdx * 150}ms` : undefined, animationFillMode: 'forwards' }}>
                     <Component widget={widget} {...extraProps} />
@@ -593,6 +625,8 @@ export default function LoftyDashboard() {
             </div>
           ))}
         </div>
+
+        <AICommandCenter onNavigate={setActiveNav} widgetData={widgetData} />
       </main>
     </div>
   )
